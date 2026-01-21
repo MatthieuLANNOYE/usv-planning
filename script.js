@@ -298,7 +298,17 @@ async function initPublicPage() {
   renderGroup("Samedi", "⚽", groups.Samedi);
   renderGroup("Dimanche", "⚽", groups.Dimanche);
 
-  setInterval(initPublicPage, 120000);  // 2 minutes
+  // Anti-spam : refresh seulement si changement détecté
+  let lastHash = '';
+  setInterval(async () => {
+    const data = await loadMatches();
+    const hash = JSON.stringify(data).slice(0, 50);  // hash simple
+    if (hash !== lastHash) {
+      console.log('🔄 Changement détecté → refresh');
+      lastHash = hash;
+      await initPublicPage();
+    }
+  }, 120000);  // 2min
 
  }
 
@@ -437,6 +447,7 @@ document.addEventListener("DOMContentLoaded", async function() {
   }
 
 });
+
 
 
 
