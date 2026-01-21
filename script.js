@@ -26,14 +26,21 @@ async function loadMatches() {
 async function saveMatches(matches) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
   try {
-    await fetch('https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(matches)
-    });
-    console.log('✅ Sauvegardé jsonstorage!');
-  } catch(e) {
-    console.warn('❌ jsonstorage PUT échoué:', e);
+    const resp = await fetch(
+      'https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf6912301777/c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(matches),
+      }
+    );
+    if (!resp.ok) {
+      console.warn('PUT jsonstorage non OK:', resp.status);
+    } else {
+      console.log('✅ jsonstorage mis à jour');
+    }
+  } catch (e) {
+    console.warn('❌ Erreur PUT jsonstorage:', e);
   }
 }
 
@@ -414,3 +421,4 @@ document.addEventListener("DOMContentLoaded", async function() {
   }
 
 });
+
