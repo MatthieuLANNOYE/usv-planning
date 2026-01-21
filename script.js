@@ -23,8 +23,18 @@ async function loadMatches() {
   return await loadMatchesManual();
 }
 
-function saveMatches(matches) {
+async function saveMatches(matches) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
+  try {
+    await fetch('https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(matches)
+    });
+    console.log('✅ Sauvegardé jsonstorage!');
+  } catch(e) {
+    console.warn('❌ jsonstorage PUT échoué:', e);
+  }
 }
 
 function getDayLabel(dateStr) {
@@ -61,6 +71,7 @@ function isThisWeek(matchDate) {
   const monday = getMondayOfWeek(new Date());
   const sunday = new Date(monday);
   sunday.setDate(sunday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
   
   const match = new Date(matchDate);
   return match >= monday && match <= sunday;
@@ -82,7 +93,7 @@ async function initPublicPage() {
   console.log("📊 Nombre total :", window.matches.length);
 
   // ⚠️ TEMPORAIRE : Afficher TOUS les matchs sans filtre
-  let matches = window.matches;
+  // let matches = window.matches;
   
   // Version avec filtre (à réactiver plus tard)
   /*
@@ -104,12 +115,27 @@ async function initPublicPage() {
   });
   */
   
+  let matches = window.matches.filter(m => {
+    const date = new Date(m.datetime);
+    const isValid = !isNaN(date.getTime()) && 
+           m.homeTeam && m.homeTeam.trim() !== "" &&
+           m.awayTeam && m.awayTeam.trim() !== "";
+    
+    // ✅ AJOUT : Vérifier si le match est dans la semaine en cours
+    const isCurrentWeek = isThisWeek(m.datetime);
+    
+    return isValid && isCurrentWeek;
+  });
+  
   console.log("✅ Matchs à afficher :", matches.length);
   
   const weekTitle = document.createElement("div");
   weekTitle.className = "week-title";
   const monday = getMondayOfWeek(new Date());
-  weekTitle.innerHTML = `📅 Semaine du ${formatDate(monday.getTime())}`;
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+   
+  weekTitle.innerHTML = `📅 Semaine du ${formatDate(monday.getTime())} au ${formatDate(sunday.getTime())}`;
 
   matches.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
@@ -386,4 +412,5 @@ document.addEventListener("DOMContentLoaded", async function() {
       document.getElementById("match-id").value = "";
     });
   }
+
 });
