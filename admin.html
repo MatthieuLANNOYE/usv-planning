@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin rencontres - US Vermelles</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+</head>
+<body data-page="admin">
+  <header class="main-header admin-header">
+    <div class="logo-title">
+      <img src="USV_transparent-2.png" alt="Logo US Vermelles" class="club-logo">
+      <div>
+        <h1>Administration des rencontres</h1>
+        <p>Buvette US Vermelles</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <section class="admin-form-section">
+      <h2>Ajouter / modifier une rencontre</h2>
+      <form id="match-form">
+        <input type="hidden" id="match-id">
+
+        <label>
+          Date et heure
+          <input type="datetime-local" id="match-datetime" required>
+        </label>
+
+        <label>
+          Équipe à domicile
+          <input type="text" id="match-home" required>
+        </label>
+
+        <label>
+          Équipe à l’extérieur
+          <input type="text" id="match-away" required>
+        </label>
+
+        <label>
+          Lieu
+          <input type="text" id="match-venue" placeholder="Stade Léo Lagrange">
+        </label>
+
+        <label>
+          Statut
+          <select id="match-status">
+            <option value="a_venir">À venir</option>
+            <option value="en_cours">En cours</option>
+            <option value="termine">Terminé</option>
+            <option value="reporte">Reporté</option>
+          </select>
+        </label>
+
+        <label>
+          Compétition
+          <select id="match-competition">
+            <option value="Championnat">Championnat</option>
+            <option value="Coupe de France">Coupe de France</option>
+            <option value="Coupe des Hauts de France">Coupe des Hauts de France</option>
+            <option value="Coupe Gambardella">Coupe Gambardella</option>
+            <option value="Coupe d'Artois">Coupe d'Artois</option>
+            <option value="Amical">Amical</option>
+          </select>
+        </label>
+
+        <div class="score-fields">
+          <label>
+            Score domicile
+            <input type="number" id="match-score-home" min="0" step="1">
+          </label>
+          <label>
+            Score extérieur
+            <input type="number" id="match-score-away" min="0" step="1">
+          </label>
+        </div>
+
+        <div class="score-penalties" style="display:none;">
+          <label>TAB Home: <input id="match-tab-home" type="number" min="0" style="width:50px;"></label>
+          <label>TAB Away: <input id="match-tab-away" type="number" min="0" style="width:50px;"></label>
+        </div>
+
+        <button type="submit" class="btn primary">Enregistrer</button>
+        <button type="button" id="reset-form" class="btn">Réinitialiser</button>
+      </form>
+    </section>
+
+    <section class="admin-list-section">
+      <h2>Rencontres du week‑end</h2>
+      <p>Clique sur un match pour le modifier. Utilise le bouton supprimer pour l’enlever.</p>
+      <div id="admin-matches-list">
+        <!-- Liste interactive des matchs -->
+      </div>
+    </section>
+  </main>
+</body>
+</html>
