@@ -25,12 +25,12 @@ async function loadMatchesManual() {
     console.log('🔄 Fetch jsonstorage...');
     const resp = await fetch('https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d');
     const data = await resp.json();
-    localStorage.setItem(STORAGEKEY, JSON.stringify(data));  // Override local
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));  // Override local
     console.log('✅ jsonstorage → localStorage:', data.length, 'matchs');
     return data;
   } catch(e) {
     console.warn('❌ jsonstorage down, fallback local:', e);
-    const local = localStorage.getItem(STORAGEKEY);
+    const local = localStorage.getItem(STORAGE_KEY);
     return local ? JSON.parse(local) : [];
   }
 }
@@ -437,5 +437,6 @@ document.addEventListener("DOMContentLoaded", async function() {
   }
 
 });
+
 
 
