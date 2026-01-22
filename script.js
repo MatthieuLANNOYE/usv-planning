@@ -258,7 +258,7 @@ async function initPublicPage() {
       lastHash = hash;
       await initPublicPage();
     }
-  }, 120000);  // 2min
+  }, 300000);  // 5min (300000 ms)
 
  }
 
