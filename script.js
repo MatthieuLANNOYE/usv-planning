@@ -66,9 +66,13 @@ function formatDate(dateStr) {
   return d.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "2-digit" });
 }
 
-function formatDateTime(dateStr) {
-  const d = new Date(dateStr);
-  return `${formatDate(dateStr)} ${formatTime(dateStr)}`;
+function formatDateTime(timestamp) {
+  const d = new Date(timestamp);
+  const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const day = days[d.getDay()];
+  const date = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return `${day} ${date} ${time}`;
 }
 
 function getMondayOfWeek(date) {
@@ -370,7 +374,7 @@ function renderAdminList() {
   });
 
   if (sorted.length === 0) {
-    list.innerHTML = "<p style='text-align:center; color:#666;'>Aucun match ce week-end</p>";
+    list.innerHTML = "<p style='text-align:center; color:#666; padding:2rem;'>Aucun match ce week-end</p>";
   }
 }
 
