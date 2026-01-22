@@ -66,11 +66,23 @@ function formatDate(dateStr) {
   return d.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "2-digit" });
 }
 
+function formatDateTime(dateStr) {
+  const d = new Date(dateStr);
+  return `${formatDate(dateStr)} ${formatTime(dateStr)}`;
+}
+
 function getMondayOfWeek(date) {
   const d = new Date(date);
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   return new Date(d.setDate(diff));
+}
+
+function getSundayOfWeek(date) {
+  const monday = getMondayOfWeek(date);
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+  return sunday;
 }
 
 function isThisWeek(matchDate) {
@@ -312,6 +324,54 @@ function refreshAdminList() {
     
     listContainer.appendChild(item);
   });
+}
+
+function renderAdminList() {
+  const list = document.getElementById("admin-matches-list");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  const sorted = window.matches
+    .filter(m => {
+      const d = new Date(m.datetime);
+      return d >= getMondayOfWeek(new Date()) && d <= getSundayOfWeek(new Date());
+    })
+    .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+
+  sorted.forEach(m => {
+    const card = document.createElement("div");
+    card.className = "admin-match-card";
+    
+    const statusLabels = {
+      a_venir: "À venir",
+      en_cours: "En cours",
+      termine: "Terminé",
+      reporte: "Reporté"
+    };
+
+    const scoreHtml = (m.scoreHome != null && m.scoreAway != null)
+      ? `<div class="match-score">${m.scoreHome} - ${m.scoreAway}</div>`
+      : '';
+
+    card.innerHTML = `
+      <button class="delete-btn" onclick="deleteMatch('${m.id}'); event.stopPropagation();">×</button>
+      <div class="match-date">${formatDateTime(m.datetime)}</div>
+      <div class="match-teams">${m.homeTeam} vs ${m.awayTeam}</div>
+      <div class="match-details">
+        📍 ${m.venue || 'Lieu non précisé'} • ${m.competition || 'Championnat'}
+      </div>
+      ${scoreHtml}
+      <span class="status-badge status-${m.status}">${statusLabels[m.status]}</span>
+    `;
+
+    card.addEventListener("click", () => editMatch(m));
+    list.appendChild(card);
+  });
+
+  if (sorted.length === 0) {
+    list.innerHTML = "<p style='text-align:center; color:#666;'>Aucun match ce week-end</p>";
+  }
 }
 
 window.deleteMatch = function(index) {
