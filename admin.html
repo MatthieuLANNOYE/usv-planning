@@ -34,7 +34,7 @@
         </label>
 
         <label>
-          Équipe à l’extérieur
+          Équipe à l'extérieur
           <input type="text" id="match-away" required>
         </label>
 
@@ -55,43 +55,32 @@
 
         <label>
           Compétition
-          <select id="match-competition">
-            <option value="Championnat">Championnat</option>
-            <option value="Coupe de France">Coupe de France</option>
-            <option value="Coupe des Hauts de France">Coupe des Hauts de France</option>
-            <option value="Coupe Gambardella">Coupe Gambardella</option>
-            <option value="Coupe d'Artois">Coupe d'Artois</option>
-            <option value="Amical">Amical</option>
-          </select>
+          <input type="text" id="match-competition" placeholder="Championnat">mpetition" placeholder="Championnat">
         </label>
 
         <div class="score-fields">
           <label>
             Score domicile
-            <input type="number" id="match-score-home" min="0" step="1">
+            <input type="number" id="match-score-home" min="0">ome" min="0">
           </label>
-          <label>
-            Score extérieur
-            <input type="number" id="match-score-away" min="0" step="1">
-          </label>
+          <label>>
+            Score extérieur            Score extérieur
+            <input type="number" id="match-score-away" min="0">d="match-score-away" min="0">
+          </label>>
         </div>
 
-        <div class="score-penalties" style="display:none;">
-          <label>TAB Home: <input id="match-tab-home" type="number" min="0" style="width:50px;"></label>
-          <label>TAB Away: <input id="match-tab-away" type="number" min="0" style="width:50px;"></label>
-        </div>
-
-        <button type="submit" class="btn primary">Enregistrer</button>
-        <button type="button" id="reset-form" class="btn">Réinitialiser</button>
+        <button type="submit" class="btn primary">Enregistrer</button>pe="submit" class="btn primary">Enregistrer</button>
+        <button type="button" class="btn" onclick="resetForm()">Annuler</button>ype="button" class="btn" onclick="resetForm()">Annuler</button>
       </form>
     </section>
 
-    <section class="admin-list-section">
-      <h2>Rencontres du week‑end</h2>
-      <p>Clique sur un match pour le modifier. Utilise le bouton supprimer pour l'enlever.</p>
+    <!-- ✅ SECTION POUR AFFICHER LES MATCHS EN CARTES -->TION POUR AFFICHER LES MATCHS EN CARTES -->
+    <section class="admin-list-section">    <section class="admin-list-section">
+      <h2>Rencontres du week-end</h2>
+      <p style="font-size: 0.9rem; color: #666;">Clique sur un match pour le modifier. Utilise le bouton supprimer pour l'enlever.</p> supprimer pour l'enlever.</p>
       <div id="admin-matches-list" class="admin-matches-grid">
-        <!-- Liste interactive des matchs -->
-      </div>
+        <!-- Les cartes seront injectées ici par JavaScript -->es cartes seront injectées ici par JavaScript -->
+      </div>      </div>
     </section>
   </main>
 </body>
