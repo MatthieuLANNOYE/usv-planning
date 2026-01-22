@@ -2,23 +2,6 @@
 const STORAGE_KEY = "usv_matches";
 
 // ===== FONCTIONS DE STOCKAGE =====
-// async function loadMatchesManual() {
-//   const local = localStorage.getItem(STORAGE_KEY);
-//   if (local) return JSON.parse(local);
-
-  
-  
-//    try {
-//     const resp = await fetch('https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d');
-//     const data = await resp.json();
-//     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-//     return data;
-//    } catch (e) {
-//      console.warn('data.json non trouvée, démarrage vide');
-//      return [];
-//    }
-// 
-
 async function loadMatchesManual() {
   // 1. TOUJOURS charger jsonstorage en priorité
   try {
@@ -115,29 +98,6 @@ async function initPublicPage() {
   console.log("📊 Matchs chargés depuis localStorage :", window.matches);
   console.log("📊 Nombre total :", window.matches.length);
 
-  // ⚠️ TEMPORAIRE : Afficher TOUS les matchs sans filtre
-  // let matches = window.matches;
-  
-  // Version avec filtre (à réactiver plus tard)
-  /*
-  let matches = window.matches.filter(m => {
-    const date = new Date(m.datetime);
-    const isValid = !isNaN(date.getTime()) && 
-           m.homeTeam && m.homeTeam.trim() !== "" &&
-           m.awayTeam && m.awayTeam.trim() !== "";
-    
-    if (!isValid) {
-      console.log("❌ Match rejeté :", m, {
-        dateValid: !isNaN(date.getTime()),
-        homeTeam: m.homeTeam,
-        awayTeam: m.awayTeam
-      });
-    }
-    
-    return isValid;
-  });
-  */
-  
   let matches = window.matches.filter(m => {
     const date = new Date(m.datetime);
     const isValid = !isNaN(date.getTime()) && 
@@ -216,16 +176,6 @@ async function initPublicPage() {
       const compClass = m.competition ? 
         `competition-${m.competition.replace(/[^a-z]/g, '')}` : "";
       const compText = compLabels[m.competition] || m.competition;
-
-      // info.innerHTML = `
-      //   <div class="match-teams">${m.homeTeam} - ${m.awayTeam}</div>
-      //   <div class="match-meta">
-      //     ${formatDate(m.datetime)} • ${formatTime(m.datetime)} • ${m.venue || ""}
-      //     ${compText
-      //       ? `<span class="competition-badge ${compClass}">${compText}</span>`
-      //       : ""}
-      //   </div>
-      // `;
 
       info.innerHTML = `
         <div class="match-teams">${m.homeTeam} - ${m.awayTeam}</div>
