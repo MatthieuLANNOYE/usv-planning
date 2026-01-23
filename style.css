@@ -372,6 +372,7 @@ form select {
 }
 
 .sponsor-footer {
+  margin-top: auto;
   padding: 1.5rem 2rem;
   background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.3));
   text-align: center;
