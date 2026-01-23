@@ -148,6 +148,16 @@ async function initPublicPage() {
     groups[label].push(m);
   }
 
+  const totalMatches = matches.length;
+  
+  if (totalMatches > 10) {
+    document.body.style.zoom = "0.85";
+  } else if (totalMatches > 7) {
+    document.body.style.zoom = "0.9";
+  } else {
+    document.body.style.zoom = "1";
+  }
+
   container.innerHTML = "";
   container.appendChild(weekTitle);
 
