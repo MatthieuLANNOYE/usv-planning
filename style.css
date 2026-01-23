@@ -569,3 +569,191 @@ form select {
   font-size: 1.2rem; /* Réduit de 1.5rem */
   margin: 0.5rem 0;
 }
+
+/* ========== RESPONSIVE MOBILE ========== */
+
+/* Smartphones portrait (320px - 480px) */
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  /* Header mobile */
+  .main-header {
+    padding: 0.5rem;
+  }
+
+  .logo-title {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .club-logo {
+    height: 50px;
+  }
+
+  .main-header h1 {
+    font-size: 1.3rem !important;
+  }
+
+  .main-header p {
+    font-size: 0.9rem !important;
+  }
+
+  /* Ticker mobile */
+  .ticker {
+    padding: 6px 0;
+  }
+
+  .ticker-content {
+    font-size: 0.9rem;
+  }
+
+  /* Titre de semaine mobile */
+  .week-title {
+    font-size: 1rem;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  /* Container principal */
+  #matches-container {
+    padding: 0.5rem;
+    margin: 0.5rem;
+    border-radius: 8px;
+  }
+
+  /* Grille en 1 colonne sur mobile */
+  .matches-list {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+
+  /* Cartes de match adaptées mobile */
+  .match-card {
+    height: auto !important;
+    min-height: 110px;
+    max-height: none;
+    padding: 0.8rem;
+    border-radius: 12px;
+    max-width: 100%;
+  }
+
+  .match-info-main {
+    margin-right: 0.5rem;
+    gap: 0.3rem;
+  }
+
+  .match-teams {
+    font-size: 0.95rem;
+  }
+
+  .team-home, .team-away {
+    max-width: 100%;
+    font-size: 0.85rem;
+  }
+
+  .match-meta {
+    font-size: 0.7rem;
+    gap: 0.2rem;
+  }
+
+  .match-score {
+    font-size: 1.3rem !important;
+    min-width: 3.5rem;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .match-status {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+  }
+
+  .competition-badge {
+    font-size: 0.65rem !important;
+    padding: 0.15rem 0.4rem !important;
+    margin-left: 0.3rem !important;
+  }
+
+  .day-separator {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+  }
+
+  /* Footer mobile */
+  .sponsor-footer {
+    padding: 1rem 0;
+  }
+
+  .sponsor-section p {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .sponsor-logo {
+    height: 60px;
+    max-width: 180px;
+  }
+
+  .sponsors {
+    gap: 1rem;
+  }
+}
+
+/* Smartphones paysage (481px - 767px) */
+@media (min-width: 481px) and (max-width: 767px) {
+  .matches-list {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem;
+  }
+
+  .match-card {
+    max-width: 100%;
+  }
+
+  .main-header h1 {
+    font-size: 1.5rem !important;
+  }
+
+  .main-header p {
+    font-size: 1rem !important;
+  }
+
+  .club-logo {
+    height: 60px;
+  }
+}
+
+/* Tablettes (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .matches-list {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem;
+  }
+
+  .match-card {
+    max-width: 100%;
+  }
+
+  .main-header h1 {
+    font-size: 1.8rem !important;
+  }
+
+  .club-logo {
+    height: 65px;
+  }
+}
+
+/* Touch-friendly buttons sur mobile */
+@media (hover: none) and (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+    padding: 0.6rem 1.2rem;
+  }
+
+  .match-card {
+    cursor: default;
+  }
+}
