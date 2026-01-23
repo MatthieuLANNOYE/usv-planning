@@ -108,7 +108,14 @@ async function initPublicPage() {
   await initMatches();
   
   const container = document.getElementById("matches-container");
-  if (!container) return;
+  // if (!container) return;
+  if (totalMatches > 10) {
+    container.style.zoom = "0.85";
+  } else if (totalMatches > 7) {
+    container.style.zoom = "0.9";
+  } else {
+    container.style.zoom = "1";
+  }
 
   // 🔍 DEBUG : Afficher tous les matchs bruts
   console.log("📊 Matchs chargés depuis localStorage :", window.matches);
