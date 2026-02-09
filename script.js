@@ -6,7 +6,8 @@ async function loadMatchesManual() {
   // 1. TOUJOURS charger jsonstorage en priorité
   try {
     console.log('🔄 Fetch jsonstorage...');
-    const resp = await fetch('https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d');
+    // const resp = await fetch('https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d');
+    const resp = await fetch('https://raw.githubusercontent.com/MatthieuLANNOYE/usv-planning/main/data.json');
     const data = await resp.json();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));  // Override local
     console.log('✅ jsonstorage → localStorage:', data.length, 'matchs');
@@ -26,7 +27,8 @@ async function saveMatches(matches) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
   try {
     const resp = await fetch(
-      'https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d',
+      // 'https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d',
+      'https://raw.githubusercontent.com/MatthieuLANNOYE/usv-planning/main/data.json',
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
