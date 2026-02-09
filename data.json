@@ -22,17 +22,6 @@
     "scoreAway": null
   },
   {
-    "id": 6,
-    "datetime": "2026-02-08T10:30",
-    "homeTeam": "U17 R2",
-    "awayTeam": "Arras FA",
-    "venue": "Terrain synthétique",
-    "status": "a_venir",
-    "competition": "Championnat",
-    "scoreHome": null,
-    "scoreAway": null
-  },
-  {
     "id": 7,
     "datetime": "2026-02-15T10:00",
     "homeTeam": "OS Aire",
@@ -50,6 +39,17 @@
     "awayTeam": "Séniors R3",
     "venue": "Stade Jean Depoortere",
     "status": "a_venir",
+    "competition": "Championnat",
+    "scoreHome": null,
+    "scoreAway": null
+  },
+  {
+    "id": 9,
+    "datetime": "2026-02-07T14:30",
+    "homeTeam": "AJ Artois",
+    "awayTeam": "U18 D2",
+    "venue": "Terrain naturel",
+    "status": "reporte",
     "competition": "Championnat",
     "scoreHome": null,
     "scoreAway": null
