@@ -317,57 +317,8 @@ async function initPublicPage() {
  }
 
 /* --------- Admin ---------- */
-function refreshAdminList() {
-  const listContainer = document.getElementById("admin-matches-list");
-  if (!listContainer) return;
 
-  // Force reload
-  initMatches();
-
-  const validMatches = window.matches.filter(m => {
-    const date = new Date(m.datetime);
-    return !isNaN(date.getTime()) && m.homeTeam && m.awayTeam;
-  });
-
-  if (validMatches.length === 0) {
-    listContainer.innerHTML = "<p>Aucun match pour l'instant.</p>";
-    return;
-  }
-
-  listContainer.innerHTML = "";
-  
-  validMatches.forEach((m, index) => {
-    const item = document.createElement("div");
-    item.className = "admin-match-item";
-    item.style.cursor = "pointer";
-    item.innerHTML = `
-      <span>
-        ${formatDate(m.datetime)} ${formatTime(m.datetime)} - 
-        <strong>${m.homeTeam}</strong> vs <strong>${m.awayTeam}</strong>
-        ${m.venue ? `(${m.venue})` : ''}
-      </span>
-      <button onclick="deleteMatch(${index})" class="delete-btn" title="Supprimer">❌</button>
-    `;
-    
-    // Clic pour éditer (pré-remplit le form)
-    item.addEventListener("click", (e) => {
-      if (e.target.tagName === "BUTTON") return; // Ignore bouton suppr
-      
-      document.getElementById("match-id").value = m.id || index;
-      document.getElementById("match-datetime").value = m.datetime;
-      document.getElementById("match-home").value = m.homeTeam;
-      document.getElementById("match-away").value = m.awayTeam;
-      document.getElementById("match-venue").value = m.venue || "";
-      document.getElementById("match-status").value = m.status || "avenir";
-      document.getElementById("match-competition").value = m.competition || "";
-      document.getElementById("match-score-home").value = m.scoreHome || "";
-      document.getElementById("match-score-away").value = m.scoreAway || "";
-    });
-    
-    listContainer.appendChild(item);
-  });
-}
-
+// ✅ GARDEZ UNIQUEMENT CETTE FONCTION
 function renderAdminList() {
   const list = document.getElementById("admin-matches-list");
   if (!list) return;
@@ -397,7 +348,7 @@ function renderAdminList() {
       : '';
 
     card.innerHTML = `
-      <button class="delete-btn" onclick="deleteMatch('${m.id}'); event.stopPropagation();">×</button>
+      <button class="delete-btn" onclick="deleteMatch(${m.id}); event.stopPropagation();">×</button>
       <div class="match-date">${formatDateTime(m.datetime)}</div>
       <div class="match-teams">${m.homeTeam} vs ${m.awayTeam}</div>
       <div class="match-details">
@@ -416,12 +367,39 @@ function renderAdminList() {
   }
 }
 
-window.deleteMatch = function(index) {
-  if (confirm("Supprimer ce match ?")) {
-    window.matches.splice(index, 1);
-    saveMatches(window.matches);
-    refreshAdminList();
+// ✅ FONCTION POUR ÉDITER UN MATCH
+function editMatch(match) {
+  document.getElementById("match-id").value = match.id;
+  document.getElementById("match-datetime").value = match.datetime;
+  document.getElementById("match-home").value = match.homeTeam;
+  document.getElementById("match-away").value = match.awayTeam;
+  document.getElementById("match-venue").value = match.venue || "";
+  document.getElementById("match-status").value = match.status || "a_venir";
+  document.getElementById("match-competition").value = match.competition || "";
+  document.getElementById("match-score-home").value = match.scoreHome ?? "";
+  document.getElementById("match-score-away").value = match.scoreAway ?? "";
+  
+  // Scroll vers le formulaire
+  document.getElementById("match-form").scrollIntoView({ behavior: "smooth" });
+}
+
+// ✅ FONCTION DE SUPPRESSION CORRIGÉE
+window.deleteMatch = function(matchId) {
+  if (!confirm("Supprimer ce match ?")) return;
+  
+  // Trouver l'index par ID (pas directement l'index du tableau)
+  const index = window.matches.findIndex(m => m.id === matchId);
+  
+  if (index === -1) {
+    console.error("Match non trouvé avec ID:", matchId);
+    return;
   }
+  
+  window.matches.splice(index, 1);
+  saveMatches(window.matches);
+  renderAdminList(); // ✅ Utiliser renderAdminList au lieu de refreshAdminList
+  
+  console.log("✅ Match supprimé, reste:", window.matches.length);
 };
 
 /* --------- Init en fonction de la page ---------- */
@@ -436,7 +414,8 @@ document.addEventListener("DOMContentLoaded", async function() {
   // Page admin
   const form = document.getElementById("match-form");
   if (form) {
-    refreshAdminList();  // ← AJOUT ICI
+    renderAdminList(); // ✅ Appel initial
+    
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       
@@ -444,52 +423,82 @@ document.addEventListener("DOMContentLoaded", async function() {
       const datetime = document.getElementById("match-datetime").value;
       const homeTeam = document.getElementById("match-home").value.trim();
       const awayTeam = document.getElementById("match-away").value.trim();
-      const venue = document.getElementById("match-venue").value;
+      const venue = document.getElementById("match-venue").value.trim();
       const status = document.getElementById("match-status").value || "a_venir";
-      const competition = document.getElementById("match-competition").value;
+      const competition = document.getElementById("match-competition").value.trim();
       const scoreHomeStr = document.getElementById("match-score-home").value;
       const scoreAwayStr = document.getElementById("match-score-away").value;
       
-      const scoreHome = scoreHomeStr ? Number(scoreHomeStr) : null;
-      const scoreAway = scoreAwayStr ? Number(scoreAwayStr) : null;
+      const scoreHome = scoreHomeStr !== "" ? Number(scoreHomeStr) : null;
+      const scoreAway = scoreAwayStr !== "" ? Number(scoreAwayStr) : null;
       
       if (!homeTeam || !awayTeam) {
-        alert("⚠️ Équipes obligatoires !");
+        alert("⚠️ Les équipes sont obligatoires !");
+        return;
+      }
+      
+      if (!datetime) {
+        alert("⚠️ La date et l'heure sont obligatoires !");
         return;
       }
       
       if (id) {
-        // Édition
+        // ✅ ÉDITION : Trouver par ID
         const idx = window.matches.findIndex(m => String(m.id) === String(id));
         if (idx !== -1) {
           window.matches[idx] = {
             ...window.matches[idx],
-            datetime, homeTeam, awayTeam, venue, 
-            status, competition, scoreHome, scoreAway
+            datetime, 
+            homeTeam, 
+            awayTeam, 
+            venue, 
+            status, 
+            competition, 
+            scoreHome, 
+            scoreAway
           };
+          console.log("✅ Match modifié:", window.matches[idx]);
+        } else {
+          alert("❌ Match introuvable pour modification");
+          return;
         }
       } else {
-        // Ajout
-        const newId = window.matches.length 
+        // ✅ AJOUT : Générer un nouvel ID unique
+        const newId = window.matches.length > 0
           ? Math.max(...window.matches.map(m => m.id || 0)) + 1 
           : 1;
-        window.matches.push({
-          id: newId, datetime, homeTeam, awayTeam, 
-          venue, status, competition, scoreHome, scoreAway
-        });
+        
+        const newMatch = {
+          id: newId, 
+          datetime, 
+          homeTeam, 
+          awayTeam, 
+          venue, 
+          status, 
+          competition, 
+          scoreHome, 
+          scoreAway
+        };
+        
+        window.matches.push(newMatch);
+        console.log("✅ Nouveau match ajouté:", newMatch);
       }
       
-      saveMatches(window.matches);
-      refreshAdminList();
+      // ✅ Sauvegarder sur GitHub via l'API
+      await saveMatches(window.matches);
       
+      // ✅ Rafraîchir l'affichage
+      renderAdminList();
+      
+      // ✅ Réinitialiser le formulaire
       form.reset();
       document.getElementById("match-id").value = "";
       
-      console.log("✅ Match OK !", window.matches[window.matches.length - 1]);
+      alert("✅ Match enregistré avec succès !");
     });
   }
   
-  // Bouton reset (correction de l'ID)
+  // Bouton reset
   const resetBtn = document.getElementById("reset-form");
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
@@ -497,7 +506,6 @@ document.addEventListener("DOMContentLoaded", async function() {
       document.getElementById("match-id").value = "";
     });
   }
-
 });
 
 
