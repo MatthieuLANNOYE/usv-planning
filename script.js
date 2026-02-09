@@ -71,20 +71,6 @@ async function saveMatches(matches) {
   }
 }
 
-// Fonction pour vérifier les limites de l'API GitHub
-async function checkGitHubLimit() {
-  try {
-    const resp = await fetch('https://api.github.com/rate_limit', {
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-    });
-    const data = await resp.json();
-    console.log('📊 GitHub API limite:', data.rate);
-    return data.rate;
-  } catch (e) {
-    console.error('❌ Erreur vérification limite:', e);
-  }
-}
-
 function getDayLabel(dateStr) {
   const d = new Date(dateStr);
   const day = d.getDay();
@@ -143,9 +129,6 @@ function isThisWeek(matchDate) {
 
 async function initMatches() {
   window.matches = Array.isArray(await loadMatches()) ? await loadMatches() : [];
-  
-  // Afficher les limites API (optionnel, pour debug)
-  await checkGitHubLimit();
 }
 
 /* --------- Affichage public ---------- */
