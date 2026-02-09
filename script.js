@@ -1,47 +1,87 @@
 // Stockage simple dans localStorage pour la démo.
 const STORAGE_KEY = "usv_matches";
 
+// ===== CONFIGURATION GITHUB =====
+const GITHUB_REPO = 'MatthieuLANNOYE/usv-planning';
+const GITHUB_FILE = 'data.json';
+const GITHUB_BRANCH = 'main';
+
+// ⚠️ ATTENTION : Le token doit être dans les variables d'environnement Vercel
+// Pour le développement local, vous pouvez le mettre ici temporairement
+const GITHUB_TOKEN = typeof process !== 'undefined' && process.env?.GITHUB_TOKEN 
+  ? process.env.GITHUB_TOKEN 
+  : ''; // ⚠️ Remplacez temporairement pour les tests locaux
+
 // ===== FONCTIONS DE STOCKAGE =====
-async function loadMatchesManual() {
-  // 1. TOUJOURS charger jsonstorage en priorité
+async function loadMatches() {
   try {
-    console.log('🔄 Fetch jsonstorage...');
-    // const resp = await fetch('https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d');
-    const resp = await fetch('https://raw.githubusercontent.com/MatthieuLANNOYE/usv-planning/main/data.json');
-    const data = await resp.json();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));  // Override local
-    console.log('✅ jsonstorage → localStorage:', data.length, 'matchs');
-    return data;
+    console.log('🔄 Chargement depuis API Vercel...');
+    
+    const resp = await fetch('/api/github-proxy', {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    });
+    
+    if (!resp.ok) {
+      throw new Error(`API error: ${resp.status}`);
+    }
+    
+    const content = await resp.json();
+    
+    // Sauvegarder en local comme backup
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+    
+    console.log('✅ API → localStorage:', content.length, 'matchs');
+    return content;
+    
   } catch(e) {
-    console.warn('❌ jsonstorage down, fallback local:', e);
+    console.warn('❌ API error, fallback vers localStorage:', e);
     const local = localStorage.getItem(STORAGE_KEY);
     return local ? JSON.parse(local) : [];
   }
 }
 
-async function loadMatches() {
-  return await loadMatchesManual();
+async function saveMatches(matches) {
+  // Toujours sauvegarder en local d'abord
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
+  
+  try {
+    console.log('🔄 Sauvegarde via API Vercel...');
+    
+    const resp = await fetch('/api/github-proxy', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(matches)
+    });
+    
+    if (!resp.ok) {
+      const error = await resp.json();
+      throw new Error(`API error: ${JSON.stringify(error)}`);
+    }
+    
+    console.log('✅ Sauvegarde GitHub OK via API');
+    
+  } catch (e) {
+    console.error('❌ Erreur sauvegarde:', e);
+    alert('⚠️ Sauvegarde locale OK, mais erreur GitHub.');
+  }
 }
 
-async function saveMatches(matches) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
+// Fonction pour vérifier les limites de l'API GitHub
+async function checkGitHubLimit() {
   try {
-    const resp = await fetch(
-      // 'https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d',
-      'https://raw.githubusercontent.com/MatthieuLANNOYE/usv-planning/main/data.json',
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(matches),
-      }
-    );
-    if (!resp.ok) {
-      console.warn('PUT jsonstorage non OK:', resp.status);
-    } else {
-      console.log('✅ jsonstorage mis à jour');
-    }
+    const resp = await fetch('https://api.github.com/rate_limit', {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+    });
+    const data = await resp.json();
+    console.log('📊 GitHub API limite:', data.rate);
+    return data.rate;
   } catch (e) {
-    console.warn('❌ Erreur PUT jsonstorage:', e);
+    console.error('❌ Erreur vérification limite:', e);
   }
 }
 
@@ -103,6 +143,9 @@ function isThisWeek(matchDate) {
 
 async function initMatches() {
   window.matches = Array.isArray(await loadMatches()) ? await loadMatches() : [];
+  
+  // Afficher les limites API (optionnel, pour debug)
+  await checkGitHubLimit();
 }
 
 /* --------- Affichage public ---------- */
