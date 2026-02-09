@@ -128,7 +128,8 @@ function isThisWeek(matchDate) {
 }
 
 async function initMatches() {
-  window.matches = Array.isArray(await loadMatches()) ? await loadMatches() : [];
+  const data = await loadMatches();
+  window.matches = Array.isArray(data) ? data : [];
 }
 
 /* --------- Affichage public ---------- */
@@ -302,19 +303,22 @@ async function initPublicPage() {
   renderGroup("Samedi", "⚽", groups.Samedi);
   renderGroup("Dimanche", "⚽", groups.Dimanche);
 
-  // Anti-spam : refresh seulement si changement détecté
-  let lastHash = '';
-  setInterval(async () => {
-    const data = await loadMatches();
-    const hash = JSON.stringify(data).slice(0, 50);  // hash simple
-    if (hash !== lastHash) {
-      console.log('🔄 Changement détecté → refresh');
-      lastHash = hash;
-      await initPublicPage();
-    }
-  }, 300000);  // 5min (300000 ms)
+// Refresh automatique toutes les 5 minutes
+let refreshTimeout;
+async function scheduleRefresh() {
+  clearTimeout(refreshTimeout);
+  refreshTimeout = setTimeout(async () => {
+    console.log('🔄 Refresh automatique...');
+    
+    // Recharger les données
+    await initMatches();
+    
+    // Recharger l'affichage complet
+    await initPublicPage();
+  }, 300000); // 5 minutes
+}
 
- }
+scheduleRefresh();
 
 /* --------- Admin ---------- */
 
@@ -328,7 +332,9 @@ function renderAdminList() {
   const sorted = window.matches
     .filter(m => {
       const d = new Date(m.datetime);
-      return d >= getMondayOfWeek(new Date()) && d <= getSundayOfWeek(new Date());
+      const monday = getMondayOfWeek(new Date());
+      const sunday = getSundayOfWeek(new Date());
+      return d >= monday && d <= sunday;
     })
     .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
@@ -350,7 +356,7 @@ function renderAdminList() {
     card.innerHTML = `
       <button class="delete-btn" onclick="deleteMatch(${m.id}); event.stopPropagation();">×</button>
       <div class="match-date">${formatDateTime(m.datetime)}</div>
-      <div class="match-teams">${m.homeTeam} vs ${m.awayTeam}</div>
+      <div class="match-teams"><strong>${m.homeTeam}</strong> vs <strong>${m.awayTeam}</strong></div>
       <div class="match-details">
         📍 ${m.venue || 'Lieu non précisé'} • ${m.competition || 'Championnat'}
       </div>
@@ -507,7 +513,3 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
   }
 });
-
-
-
-
