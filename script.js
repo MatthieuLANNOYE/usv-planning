@@ -1,73 +1,45 @@
 // Stockage simple dans localStorage pour la démo.
 const STORAGE_KEY = "usv_matches";
 
-// ===== CONFIGURATION GITHUB =====
-const GITHUB_REPO = 'MatthieuLANNOYE/usv-planning';
-const GITHUB_FILE = 'data.json';
-const GITHUB_BRANCH = 'main';
-
-// ⚠️ ATTENTION : Le token doit être dans les variables d'environnement Vercel
-// Pour le développement local, vous pouvez le mettre ici temporairement
-const GITHUB_TOKEN = typeof process !== 'undefined' && process.env?.GITHUB_TOKEN 
-  ? process.env.GITHUB_TOKEN 
-  : ''; // ⚠️ Remplacez temporairement pour les tests locaux
-
 // ===== FONCTIONS DE STOCKAGE =====
-async function loadMatches() {
+async function loadMatchesManual() {
+  // 1. TOUJOURS charger jsonstorage en priorité
   try {
-    console.log('🔄 Chargement depuis API Vercel...');
-    
-    const resp = await fetch('/api/github-proxy', {
-      method: 'GET',
-      headers: {
-        'Cache-Control': 'no-cache'
-      }
-    });
-    
-    if (!resp.ok) {
-      throw new Error(`API error: ${resp.status}`);
-    }
-    
-    const content = await resp.json();
-    
-    // Sauvegarder en local comme backup
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
-    
-    console.log('✅ API → localStorage:', content.length, 'matchs');
-    return content;
-    
+    console.log('🔄 Fetch jsonstorage...');
+    const resp = await fetch('https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d');
+    const data = await resp.json();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));  // Override local
+    console.log('✅ jsonstorage → localStorage:', data.length, 'matchs');
+    return data;
   } catch(e) {
-    console.warn('❌ API error, fallback vers localStorage:', e);
+    console.warn('❌ jsonstorage down, fallback local:', e);
     const local = localStorage.getItem(STORAGE_KEY);
     return local ? JSON.parse(local) : [];
   }
 }
 
+async function loadMatches() {
+  return await loadMatchesManual();
+}
+
 async function saveMatches(matches) {
-  // Toujours sauvegarder en local d'abord
   localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
-  
   try {
-    console.log('🔄 Sauvegarde via API Vercel...');
-    
-    const resp = await fetch('/api/github-proxy', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(matches)
-    });
-    
+    const resp = await fetch(
+      'https://api.jsonstorage.net/v1/json/306d7b7a-3156-4fd5-8905-baf691230177/7c24ee25-f318-4373-9d54-dc20f9effd58?apiKey=7cbedf26-9e50-479f-a655-2b838a52d90d',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(matches),
+      }
+    );
     if (!resp.ok) {
-      const error = await resp.json();
-      throw new Error(`API error: ${JSON.stringify(error)}`);
+      console.warn('PUT jsonstorage non OK:', resp.status);
+    } else {
+      console.log('✅ jsonstorage mis à jour');
     }
-    
-    console.log('✅ Sauvegarde GitHub OK via API');
-    
   } catch (e) {
-    console.error('❌ Erreur sauvegarde:', e);
-    alert('⚠️ Sauvegarde locale OK, mais erreur GitHub.');
+    console.warn('❌ Erreur PUT jsonstorage:', e);
   }
 }
 
@@ -128,8 +100,7 @@ function isThisWeek(matchDate) {
 }
 
 async function initMatches() {
-  const data = await loadMatches();
-  window.matches = Array.isArray(data) ? data : [];
+  window.matches = Array.isArray(await loadMatches()) ? await loadMatches() : [];
 }
 
 /* --------- Affichage public ---------- */
@@ -303,26 +274,72 @@ async function initPublicPage() {
   renderGroup("Samedi", "⚽", groups.Samedi);
   renderGroup("Dimanche", "⚽", groups.Dimanche);
 
-// Refresh automatique toutes les 5 minutes
-let refreshTimeout;
-async function scheduleRefresh() {
-  clearTimeout(refreshTimeout);
-  refreshTimeout = setTimeout(async () => {
-    console.log('🔄 Refresh automatique...');
-    
-    // Recharger les données
-    await initMatches();
-    
-    // Recharger l'affichage complet
-    await initPublicPage();
-  }, 300000); // 5 minutes
-}
+  // Anti-spam : refresh seulement si changement détecté
+  let lastHash = '';
+  setInterval(async () => {
+    const data = await loadMatches();
+    const hash = JSON.stringify(data).slice(0, 50);  // hash simple
+    if (hash !== lastHash) {
+      console.log('🔄 Changement détecté → refresh');
+      lastHash = hash;
+      await initPublicPage();
+    }
+  }, 300000);  // 5min (300000 ms)
 
-scheduleRefresh();
+ }
 
 /* --------- Admin ---------- */
+function refreshAdminList() {
+  const listContainer = document.getElementById("admin-matches-list");
+  if (!listContainer) return;
 
-// ✅ GARDEZ UNIQUEMENT CETTE FONCTION
+  // Force reload
+  initMatches();
+
+  const validMatches = window.matches.filter(m => {
+    const date = new Date(m.datetime);
+    return !isNaN(date.getTime()) && m.homeTeam && m.awayTeam;
+  });
+
+  if (validMatches.length === 0) {
+    listContainer.innerHTML = "<p>Aucun match pour l'instant.</p>";
+    return;
+  }
+
+  listContainer.innerHTML = "";
+  
+  validMatches.forEach((m, index) => {
+    const item = document.createElement("div");
+    item.className = "admin-match-item";
+    item.style.cursor = "pointer";
+    item.innerHTML = `
+      <span>
+        ${formatDate(m.datetime)} ${formatTime(m.datetime)} - 
+        <strong>${m.homeTeam}</strong> vs <strong>${m.awayTeam}</strong>
+        ${m.venue ? `(${m.venue})` : ''}
+      </span>
+      <button onclick="deleteMatch(${index})" class="delete-btn" title="Supprimer">❌</button>
+    `;
+    
+    // Clic pour éditer (pré-remplit le form)
+    item.addEventListener("click", (e) => {
+      if (e.target.tagName === "BUTTON") return; // Ignore bouton suppr
+      
+      document.getElementById("match-id").value = m.id || index;
+      document.getElementById("match-datetime").value = m.datetime;
+      document.getElementById("match-home").value = m.homeTeam;
+      document.getElementById("match-away").value = m.awayTeam;
+      document.getElementById("match-venue").value = m.venue || "";
+      document.getElementById("match-status").value = m.status || "avenir";
+      document.getElementById("match-competition").value = m.competition || "";
+      document.getElementById("match-score-home").value = m.scoreHome || "";
+      document.getElementById("match-score-away").value = m.scoreAway || "";
+    });
+    
+    listContainer.appendChild(item);
+  });
+}
+
 function renderAdminList() {
   const list = document.getElementById("admin-matches-list");
   if (!list) return;
@@ -332,9 +349,7 @@ function renderAdminList() {
   const sorted = window.matches
     .filter(m => {
       const d = new Date(m.datetime);
-      const monday = getMondayOfWeek(new Date());
-      const sunday = getSundayOfWeek(new Date());
-      return d >= monday && d <= sunday;
+      return d >= getMondayOfWeek(new Date()) && d <= getSundayOfWeek(new Date());
     })
     .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
@@ -354,9 +369,9 @@ function renderAdminList() {
       : '';
 
     card.innerHTML = `
-      <button class="delete-btn" onclick="deleteMatch(${m.id}); event.stopPropagation();">×</button>
+      <button class="delete-btn" onclick="deleteMatch('${m.id}'); event.stopPropagation();">×</button>
       <div class="match-date">${formatDateTime(m.datetime)}</div>
-      <div class="match-teams"><strong>${m.homeTeam}</strong> vs <strong>${m.awayTeam}</strong></div>
+      <div class="match-teams">${m.homeTeam} vs ${m.awayTeam}</div>
       <div class="match-details">
         📍 ${m.venue || 'Lieu non précisé'} • ${m.competition || 'Championnat'}
       </div>
@@ -373,39 +388,12 @@ function renderAdminList() {
   }
 }
 
-// ✅ FONCTION POUR ÉDITER UN MATCH
-function editMatch(match) {
-  document.getElementById("match-id").value = match.id;
-  document.getElementById("match-datetime").value = match.datetime;
-  document.getElementById("match-home").value = match.homeTeam;
-  document.getElementById("match-away").value = match.awayTeam;
-  document.getElementById("match-venue").value = match.venue || "";
-  document.getElementById("match-status").value = match.status || "a_venir";
-  document.getElementById("match-competition").value = match.competition || "";
-  document.getElementById("match-score-home").value = match.scoreHome ?? "";
-  document.getElementById("match-score-away").value = match.scoreAway ?? "";
-  
-  // Scroll vers le formulaire
-  document.getElementById("match-form").scrollIntoView({ behavior: "smooth" });
-}
-
-// ✅ FONCTION DE SUPPRESSION CORRIGÉE
-window.deleteMatch = function(matchId) {
-  if (!confirm("Supprimer ce match ?")) return;
-  
-  // Trouver l'index par ID (pas directement l'index du tableau)
-  const index = window.matches.findIndex(m => m.id === matchId);
-  
-  if (index === -1) {
-    console.error("Match non trouvé avec ID:", matchId);
-    return;
+window.deleteMatch = function(index) {
+  if (confirm("Supprimer ce match ?")) {
+    window.matches.splice(index, 1);
+    saveMatches(window.matches);
+    refreshAdminList();
   }
-  
-  window.matches.splice(index, 1);
-  saveMatches(window.matches);
-  renderAdminList(); // ✅ Utiliser renderAdminList au lieu de refreshAdminList
-  
-  console.log("✅ Match supprimé, reste:", window.matches.length);
 };
 
 /* --------- Init en fonction de la page ---------- */
@@ -420,8 +408,7 @@ document.addEventListener("DOMContentLoaded", async function() {
   // Page admin
   const form = document.getElementById("match-form");
   if (form) {
-    renderAdminList(); // ✅ Appel initial
-    
+    refreshAdminList();  // ← AJOUT ICI
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       
@@ -429,82 +416,52 @@ document.addEventListener("DOMContentLoaded", async function() {
       const datetime = document.getElementById("match-datetime").value;
       const homeTeam = document.getElementById("match-home").value.trim();
       const awayTeam = document.getElementById("match-away").value.trim();
-      const venue = document.getElementById("match-venue").value.trim();
+      const venue = document.getElementById("match-venue").value;
       const status = document.getElementById("match-status").value || "a_venir";
-      const competition = document.getElementById("match-competition").value.trim();
+      const competition = document.getElementById("match-competition").value;
       const scoreHomeStr = document.getElementById("match-score-home").value;
       const scoreAwayStr = document.getElementById("match-score-away").value;
       
-      const scoreHome = scoreHomeStr !== "" ? Number(scoreHomeStr) : null;
-      const scoreAway = scoreAwayStr !== "" ? Number(scoreAwayStr) : null;
+      const scoreHome = scoreHomeStr ? Number(scoreHomeStr) : null;
+      const scoreAway = scoreAwayStr ? Number(scoreAwayStr) : null;
       
       if (!homeTeam || !awayTeam) {
-        alert("⚠️ Les équipes sont obligatoires !");
-        return;
-      }
-      
-      if (!datetime) {
-        alert("⚠️ La date et l'heure sont obligatoires !");
+        alert("⚠️ Équipes obligatoires !");
         return;
       }
       
       if (id) {
-        // ✅ ÉDITION : Trouver par ID
+        // Édition
         const idx = window.matches.findIndex(m => String(m.id) === String(id));
         if (idx !== -1) {
           window.matches[idx] = {
             ...window.matches[idx],
-            datetime, 
-            homeTeam, 
-            awayTeam, 
-            venue, 
-            status, 
-            competition, 
-            scoreHome, 
-            scoreAway
+            datetime, homeTeam, awayTeam, venue, 
+            status, competition, scoreHome, scoreAway
           };
-          console.log("✅ Match modifié:", window.matches[idx]);
-        } else {
-          alert("❌ Match introuvable pour modification");
-          return;
         }
       } else {
-        // ✅ AJOUT : Générer un nouvel ID unique
-        const newId = window.matches.length > 0
+        // Ajout
+        const newId = window.matches.length 
           ? Math.max(...window.matches.map(m => m.id || 0)) + 1 
           : 1;
-        
-        const newMatch = {
-          id: newId, 
-          datetime, 
-          homeTeam, 
-          awayTeam, 
-          venue, 
-          status, 
-          competition, 
-          scoreHome, 
-          scoreAway
-        };
-        
-        window.matches.push(newMatch);
-        console.log("✅ Nouveau match ajouté:", newMatch);
+        window.matches.push({
+          id: newId, datetime, homeTeam, awayTeam, 
+          venue, status, competition, scoreHome, scoreAway
+        });
       }
       
-      // ✅ Sauvegarder sur GitHub via l'API
-      await saveMatches(window.matches);
+      saveMatches(window.matches);
+      refreshAdminList();
       
-      // ✅ Rafraîchir l'affichage
-      renderAdminList();
-      
-      // ✅ Réinitialiser le formulaire
       form.reset();
       document.getElementById("match-id").value = "";
       
-      alert("✅ Match enregistré avec succès !");
+      console.log("✅ Match OK !", window.matches[window.matches.length - 1]);
     });
   }
   
-  // Bouton reset
+  // Bouton reset (correction de l'ID)
   const resetBtn = document.getElementById("reset-form");
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
@@ -512,4 +469,9 @@ document.addEventListener("DOMContentLoaded", async function() {
       document.getElementById("match-id").value = "";
     });
   }
+
 });
+
+
+
+
